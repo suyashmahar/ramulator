@@ -69,11 +69,11 @@ protected:
   long max_address;
 public:
     enum class Type {
-        ChRaBaRoCo,
-        RoBaRaCoCh,
-        MAX,
+		     ChRaBaRoCo, // Channel, Rank, Bank, Row, Column
+		     RoBaRaCoCh, // Row, Bank, Rank, Column, Channel
+		     MAX,
     } type = Type::RoBaRaCoCh;
-
+  
     enum class Translation {
       None,
       Random,
