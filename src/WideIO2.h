@@ -97,6 +97,14 @@ public:
         }
     }
 
+    bool is_poweringdown(Command cmd)
+    {
+        assert(false);
+    }
+    bool is_poweringup(Command cmd)
+    {
+        assert(false);
+    }
 
     /* State */
     enum class State : int

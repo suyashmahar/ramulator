@@ -45,6 +45,7 @@ public:
         "REF", "PDE", "PDX",  "SRE", "SRX"
     };
 
+    // Scope defines the scope of the same index command defined in command_name
     Level scope[int(Command::MAX)] = {
         Level::Row,    Level::Bank,   Level::Rank,   
         Level::Column, Level::Column, Level::Column, Level::Column,
@@ -97,6 +98,26 @@ public:
         }
     }
 
+    bool is_poweringdown(Command cmd)
+    {
+        switch(int(cmd)) {
+            case int(Command::PDE):
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool is_poweringup(Command cmd)
+    {
+        switch(int(cmd)) {
+            case int(Command::PDX):
+                return true;
+            default:
+                return false;
+        }
+    }
+
 
     /* State */
     enum class State : int
@@ -109,7 +130,9 @@ public:
     /* Translate */
     Command translate[int(Request::Type::MAX)] = {
         Command::RD,  Command::WR,
-        Command::REF, Command::PDE, Command::SRE
+        Command::REF, Command::PDE,
+        Command::PDX, Command::SRE,
+        Command::SRX
     };
 
     /* Prerequisite */

@@ -25,6 +25,7 @@ public:
         WRITE,
         REFRESH,
         POWERDOWN,
+        POWERUP,
         SELFREFRESH,
         EXTENSION,
         MAX

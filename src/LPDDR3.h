@@ -97,6 +97,19 @@ public:
         }
     }
 
+    bool is_poweringdown(Command cmd)
+    {
+        switch(int(cmd)) {
+            case int(Command::PD):
+                return true;
+            default:
+                return false;
+        }
+    }
+    bool is_poweringup(Command cmd)
+    {
+        assert(false);
+    }
     /* State */
     enum class State : int
     {

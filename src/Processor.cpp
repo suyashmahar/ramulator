@@ -468,6 +468,10 @@ bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
         req_type = Request::Type::READ;
     else if (line.substr(pos)[0] == 'W')
         req_type = Request::Type::WRITE;
+    else if (line.substr(pos) == "PD")
+        req_type = Request::Type::POWERDOWN;
+    else if (line.substr(pos) == "PU")
+        req_type = Request::Type::POWERUP;
     else assert(false);
     return true;
 }

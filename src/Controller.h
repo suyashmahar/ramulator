@@ -16,6 +16,7 @@
 #include "Scheduler.h"
 #include "Statistics.h"
 
+
 #include "ALDRAM.h"
 #include "SALP.h"
 #include "TLDRAM.h"
@@ -434,7 +435,12 @@ public:
 
         // check whether this is the last command (which finishes the request)
         //if (cmd != channel->spec->translate[int(req->type)]){
-        if (!(channel->spec->is_accessing(cmd) || channel->spec->is_refreshing(cmd))) {
+        if (!(channel->spec->is_accessing(cmd)
+              || channel->spec->is_refreshing(cmd)
+              || channel->spec->is_poweringdown(cmd)
+              || channel->spec->is_poweringup(cmd))
+              || int(cmd) == 10
+              || int(cmd) == 11) {
             if(channel->spec->is_opening(cmd)) {
                 // promote the request that caused issuing activation to actq
                 actq.q.push_back(*req);

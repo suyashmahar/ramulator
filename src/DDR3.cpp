@@ -134,15 +134,25 @@ void DDR3::init_prereq()
             default: assert(false);
         }};
 
-    // SR
-    prereq[int(Level::Rank)][int(Command::SRE)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
+    // PU
+    prereq[int(Level::Rank)][int(Command::PDX)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
         switch (int(node->state)) {
-            case int(State::PowerUp): return Command::SRE;
+            case int(State::PowerUp): return Command::PDX;
             case int(State::ActPowerDown): return Command::PDX;
             case int(State::PrePowerDown): return Command::PDX;
-            case int(State::SelfRefresh): return Command::SRE;
+            case int(State::SelfRefresh): return Command::SRX;
             default: assert(false);
         }};
+
+    // SR
+//    prereq[int(Level::Rank)][int(Command::SRE)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
+//        switch (int(node->state)) {
+//            case int(State::PowerUp): return Command::SRE;
+//            case int(State::ActPowerDown): return Command::PDX;
+//            case int(State::PrePowerDown): return Command::PDX;
+//            case int(State::SelfRefresh): return Command::SRE;
+//            default: assert(false);
+//        }};
 }
 
 
