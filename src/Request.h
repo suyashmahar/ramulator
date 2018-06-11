@@ -24,9 +24,15 @@ public:
         READ,
         WRITE,
         REFRESH,
-        POWERDOWN,
-        POWERUP,
+        // Slow/Fast, pre-charge/active power-down modes
+        SPREPOWERDOWN,
+        FPREPOWERDOWN,
+        SACTPOWERDOWN,
+        FACTPOWERDOWN,
+        PREPOWERUP,
+        ACTPOWERUP,
         SELFREFRESH,
+        NOP,
         EXTENSION,
         MAX
     } type;
