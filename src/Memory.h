@@ -280,7 +280,6 @@ public:
           is_active = is_active || ctrl->is_active();
           ctrl->tick();
         }
-
         if (is_active) {
           ramulator_active_cycles++;
         }

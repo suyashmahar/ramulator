@@ -216,16 +216,22 @@ void DDR3::init_prereq() {
     prereq[int(Level::Rank)][int(Command::PDN_S_PRE)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
             case int(State::PowerUp):
+                // Send Precharge-all if any bank is open
+                for (auto bank : node->children) {
+                    if (bank->state == State::Opened) {
+                        return Command::PREA;
+                    }
+                }
+                // else pre-power-down
                 return Command::PDN_S_PRE;
             case int(State::SActPowerDown):
             case int(State::FActPowerDown):
-                return Command::PUP_ACT;
+            case int(State::FPrePowerDown):
+                assert(false && "Rank is already powered down");
             case int(State::SPrePowerDown):
                 return Command::PDN_S_PRE;
-            case int(State::FPrePowerDown):
-                return Command::PUP_PRE;
             case int(State::SelfRefresh):
-                return Command::SRX;
+                assert(false && "Rank cannot be powered down when in self-refresh mode");
             default:
                 assert(false);
         }
@@ -235,16 +241,22 @@ void DDR3::init_prereq() {
     prereq[int(Level::Rank)][int(Command::PDN_F_PRE)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
             case int(State::PowerUp):
+                // Send Precharge-all if any bank is open
+                for (auto bank : node->children) {
+                    if (bank->state == State::Opened) {
+                        return Command::PREA;
+                    }
+                }
+                // else pre-power-down
                 return Command::PDN_F_PRE;
             case int(State::SActPowerDown):
             case int(State::FActPowerDown):
-                return Command::PUP_ACT;
             case int(State::SPrePowerDown):
-                return Command::PUP_PRE;
+                assert(false && "Rank is already powered down");
             case int(State::FPrePowerDown):
                 return Command::PDN_F_PRE;
             case int(State::SelfRefresh):
-                return Command::SRX;
+                assert(false && "Rank cannot be powered down when in self-refresh mode");
             default:
                 assert(false);
         }
@@ -258,12 +270,11 @@ void DDR3::init_prereq() {
             case int(State::SActPowerDown):
                 return Command::PDN_S_ACT;
             case int(State::FActPowerDown):
-                return Command::PUP_ACT;
             case int(State::SPrePowerDown):
             case int(State::FPrePowerDown):
-                return Command::PUP_PRE;
+                assert(false && "Rank is already powered down");
             case int(State::SelfRefresh):
-                return Command::SRX;
+                assert(false && "Rank cannot be powered down when in self-refresh mode");
             default:
                 assert(false);
         }
@@ -273,18 +284,15 @@ void DDR3::init_prereq() {
     prereq[int(Level::Rank)][int(Command::PDN_F_ACT)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
             case int(State::PowerUp):
-                //return Command::PDN_F_ACT;
-            case int(State::SActPowerDown):
-                 //return Command::PUP_ACT;
+                return Command::PDN_F_ACT;
             case int(State::FActPowerDown):
-                 //return Command::PDN_F_ACT;
+                return Command::PDN_F_ACT;
+            case int(State::SActPowerDown):
             case int(State::SPrePowerDown):
             case int(State::FPrePowerDown):
-                return Command::PDN_F_ACT;
-                 //return Command::PUP_PRE;
+                assert(false && "Rank is already powered down");
             case int(State::SelfRefresh):
-                //return Command::NOP;
-                return Command::SRX;
+                assert(false && "Rank cannot be powered down when in self-refresh mode");
             default:
                 assert(false);
         }
@@ -294,15 +302,14 @@ void DDR3::init_prereq() {
     prereq[int(Level::Rank)][int(Command::PUP_ACT)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
             case int(State::PowerUp):
-                return Command::PDN_F_ACT; // If required power down to fast exit mode
+                assert(false && "Rank is powered up");
             case int(State::FActPowerDown):
-                return Command::PUP_ACT;
             case int(State::SActPowerDown):
-                return Command::PUP_ACT;
             case int(State::FPrePowerDown):
-                return Command::PUP_PRE;
+            case int(State::SPrePowerDown):
+                assert(false && "Rank is already powered up");
             case int(State::SelfRefresh):
-                return Command::SRX;
+                assert(false && "Cannot exit self-refresh mode with PUP_ACT");
             default:
                 assert(false);
         }
@@ -489,10 +496,10 @@ void DDR3::init_timing() {
     t[int(Command::RDA)].push_back({Command::PDN_F_ACT, 1, s.nCL + s.nBL + 1});
     t[int(Command::WR)].push_back({Command::PDN_F_ACT, 1, s.nCWL + s.nBL + s.nWR});
     t[int(Command::WRA)].push_back({Command::PDN_F_ACT, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
-    t[int(Command::PUP_PRE)].push_back({Command::RD, 1, s.nXP});
-    t[int(Command::PUP_PRE)].push_back({Command::RDA, 1, s.nXP});
-    t[int(Command::PUP_PRE)].push_back({Command::WR, 1, s.nXP});
-    t[int(Command::PUP_PRE)].push_back({Command::WRA, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::RD, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::RDA, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::WR, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::WRA, 1, s.nXP});
 
     // CAS <-> SR: none (all banks have to be precharged)
 
@@ -509,9 +516,9 @@ void DDR3::init_timing() {
 
     // RAS <-> PD
     t[int(Command::ACT)].push_back({Command::PDN_F_ACT, 1, 1});
-    t[int(Command::PUP_PRE)].push_back({Command::ACT, 1, s.nXP});
-    t[int(Command::PUP_PRE)].push_back({Command::PRE, 1, s.nXP});
-    t[int(Command::PUP_PRE)].push_back({Command::PREA, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::ACT, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PRE, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PREA, 1, s.nXP});
 
     // RAS <-> SR
     t[int(Command::PRE)].push_back({Command::SRE, 1, s.nRP});
@@ -523,17 +530,17 @@ void DDR3::init_timing() {
 
     // REF <-> PD
     t[int(Command::REF)].push_back({Command::PDN_F_ACT, 1, 1});
-    t[int(Command::PUP_PRE)].push_back({Command::REF, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::REF, 1, s.nXP});
 
     // REF <-> SR
     t[int(Command::SRX)].push_back({Command::REF, 1, s.nXS});
 
     // PD <-> PD
-    t[int(Command::PDN_F_ACT)].push_back({Command::PUP_PRE, 1, s.nPD});
-    t[int(Command::PUP_PRE)].push_back({Command::PDN_F_ACT, 1, s.nXP});
+    t[int(Command::PDN_F_ACT)].push_back({Command::PUP_ACT, 1, s.nPD});
+    t[int(Command::PUP_ACT)].push_back({Command::PDN_F_ACT, 1, s.nXP});
 
     // PD <-> SR
-    t[int(Command::PUP_PRE)].push_back({Command::SRE, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::SRE, 1, s.nXP});
     t[int(Command::SRX)].push_back({Command::PDN_F_ACT, 1, s.nXS});
 
     // SR <-> SR

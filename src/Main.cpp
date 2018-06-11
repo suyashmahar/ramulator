@@ -59,7 +59,7 @@ void run_dramtrace(const Config &configs, Memory<T, Controller> &memory, const c
 
         // Check if the request is a NOP
         if (!is_req_nop) {
-            // It is not, we can send the request to the controller now
+            // It is not, send the request to the controller now
             if (!end) {
                 req.addr = addr;
                 req.type = type;
@@ -79,7 +79,6 @@ void run_dramtrace(const Config &configs, Memory<T, Controller> &memory, const c
         // Else: Just tick once for the current cycle
         ticks_counter = (is_req_nop) ? addr+1 : 1;
         do {
-            std::cout << "ticking" << "tickscounter: " << ticks_counter << std::endl;
             memory.tick();
             clks++;
             Stats::curTick++; // memory clock, global, for Statistics
