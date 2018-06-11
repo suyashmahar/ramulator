@@ -79,6 +79,7 @@ void run_dramtrace(const Config &configs, Memory<T, Controller> &memory, const c
         // Else: Just tick once for the current cycle
         ticks_counter = (is_req_nop) ? addr+1 : 1;
         do {
+            std::cout << "ticking" << "tickscounter: " << ticks_counter << std::endl;
             memory.tick();
             clks++;
             Stats::curTick++; // memory clock, global, for Statistics

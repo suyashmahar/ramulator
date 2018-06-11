@@ -34,7 +34,7 @@ namespace ramulator {
             ACT, PRE, PREA,
             RD, WR, RDA, WRA,
             REF, PDN_F_PRE, PDN_S_PRE, PDN_F_ACT,
-            PDN_S_ACT, PUP_PRE, PUP_ACT, SRE, SRX,
+            PDN_S_ACT, PUP_PRE, PUP_ACT, SRE, SRX, NOP,
             MAX
         };
 
@@ -117,7 +117,6 @@ namespace ramulator {
             }
         }
 
-
         /* State */
         enum class State : int {
             Opened, Closed, PowerUp, FActPowerDown, SActPowerDown, FPrePowerDown, SPrePowerDown, SelfRefresh, MAX
@@ -125,13 +124,43 @@ namespace ramulator {
                 State::MAX, State::PowerUp, State::Closed, State::Closed, State::MAX
         };
 
+        // Check if the DRAM command issued is legal at the given level and state
+        inline bool is_cmdlegal(Command cmd, Level level, State state) {
+            bool is_cmd_rwa =
+                    cmd == Command::RD  ||
+                    cmd == Command::WR  ||
+                    cmd == Command::RDA ||
+                    cmd == Command::WRA ||
+                    cmd == Command::PDN_F_ACT ||
+                    cmd == Command::PDN_S_ACT ||
+                    cmd == Command::PDN_F_PRE ||
+                    cmd == Command::PDN_S_PRE ||
+                    cmd == Command::ACT;
+
+            if (is_cmd_rwa) {
+                if (level == Level::Rank) {
+                    switch (int(state)) {
+                        case (int(State::FPrePowerDown)):
+                        case (int(State::FActPowerDown)):
+                        case (int(State::SPrePowerDown)):
+                        case (int(State::SActPowerDown)):
+                            return false;
+                        default:
+                            return true;
+                    }
+                }
+            }
+            return true;
+        }
+
         /* Translate */
         Command translate[int(Request::Type::MAX)] = {
                 Command::RD, Command::WR,
                 Command::REF, Command::PDN_S_PRE,
                 Command::PDN_F_PRE, Command::PDN_S_ACT,
-                Command::PDN_F_ACT, Command::SRE,
-                Command::SRX
+                Command::PDN_F_ACT, Command::PUP_PRE,
+                Command::PUP_ACT, Command::SRE,
+                Command::SRX, Command::NOP
         };
 
         /* Prerequisite */

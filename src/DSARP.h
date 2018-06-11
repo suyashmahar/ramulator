@@ -159,6 +159,10 @@ public:
         State::MAX, State::PowerUp, State::Closed, State::Closed, State::MAX
     };
 
+    inline bool is_cmdlegal(Command cmd, Level level, State state) {
+        return true; // Assumes all commands are legal : Suyash
+    }
+
     /* Translate */
     Command translate[int(Request::Type::MAX)] = {
         Command::RD,  Command::WR,

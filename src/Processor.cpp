@@ -482,7 +482,7 @@ bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
     else if (line.substr(pos) == "PU_ACT")
         req_type = Request::Type::ACTPOWERUP;
     else if (line.substr(pos) == "NOP")
-        req_type = Request::Type::NOP;
-    else assert(false);
+        req_type = Request::Type::NOP; // A NOP will stall the controller for the number of cycles specified in the addr
+    else assert(false && "Unimplemented command type");
     return true;
 }
