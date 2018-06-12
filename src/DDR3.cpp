@@ -569,11 +569,7 @@ void DDR3::init_timing() {
 
     t[int(Command::PUP_ACT)].push_back({Command::PDN_F_ACT, 1, s.nXP});
     t[int(Command::PUP_ACT)].push_back({Command::PDN_S_ACT, 1, s.nXP});
-    t[int(Command::PUP_ACT)].push_back({Command::PDN_F_PRE, 1, s.nXP});
-    t[int(Command::PUP_ACT)].push_back({Command::PDN_S_PRE, 1, s.nXP});
 
-    t[int(Command::PUP_PRE)].push_back({Command::PDN_F_ACT, 1, s.nXP});
-    t[int(Command::PUP_PRE)].push_back({Command::PDN_S_ACT, 1, s.nXP});
     t[int(Command::PUP_PRE)].push_back({Command::PDN_F_PRE, 1, s.nXP});
     t[int(Command::PUP_PRE)].push_back({Command::PDN_S_PRE, 1, s.nXP});
 
