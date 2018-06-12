@@ -1,4 +1,5 @@
 #include "DDR3.h"
+#include "DDR3.h"
 #include "DRAM.h"
 #include <vector>
 #include <functional>
@@ -105,59 +106,44 @@ void DDR3::init_speed() {
     int chip = org_entry.size;
     switch (speed_entry.rate) {
         case 800:
-            speed_entry.nRFC = (chip == 512) ? 36 : (chip == 1 << 10) ? 44 : (chip == 1 << 11) ? 64 : (chip == 1 << 12)
-                                                                                                      ? 104 : 140;
+            speed_entry.nRFC = (chip == 512) ? 36 : (chip == 1 << 10) ? 44 : (chip == 1 << 11) ? 64 : (chip == 1 << 12) ? 104 : 140;
             break;
         case 1066:
-            speed_entry.nRFC = (chip == 512) ? 48 : (chip == 1 << 10) ? 59 : (chip == 1 << 11) ? 86 : (chip == 1 << 12)
-                                                                                                      ? 139 : 187;
+            speed_entry.nRFC = (chip == 512) ? 48 : (chip == 1 << 10) ? 59 : (chip == 1 << 11) ? 86 : (chip == 1 << 12) ? 139 : 187;
             break;
         case 1333:
-            speed_entry.nRFC = (chip == 512) ? 60 : (chip == 1 << 10) ? 74 : (chip == 1 << 11) ? 107 : (chip == 1 << 12)
-                                                                                                       ? 174 : 234;
+            speed_entry.nRFC = (chip == 512) ? 60 : (chip == 1 << 10) ? 74 : (chip == 1 << 11) ? 107 : (chip == 1 << 12) ? 174 : 234;
             break;
         case 1600:
-            speed_entry.nRFC = (chip == 512) ? 72 : (chip == 1 << 10) ? 88 : (chip == 1 << 11) ? 128 : (chip == 1 << 12)
-                                                                                                       ? 208 : 280;
+            speed_entry.nRFC = (chip == 512) ? 72 : (chip == 1 << 10) ? 88 : (chip == 1 << 11) ? 128 : (chip == 1 << 12) ? 208 : 280;
             break;
         case 1866:
-            speed_entry.nRFC = (chip == 512) ? 84 : (chip == 1 << 10) ? 103 : (chip == 1 << 11) ? 150 : (chip ==
-                                                                                                         1 << 12) ? 243
-                                                                                                                  : 327;
+            speed_entry.nRFC = (chip == 512) ? 84 : (chip == 1 << 10) ? 103 : (chip == 1 << 11) ? 150 : (chip == 1 << 12) ? 243 : 327;
             break;
         case 2133:
-            speed_entry.nRFC = (chip == 512) ? 96 : (chip == 1 << 10) ? 118 : (chip == 1 << 11) ? 171 : (chip ==
-                                                                                                         1 << 12) ? 278
-                                                                                                                  : 374;
+            speed_entry.nRFC = (chip == 512) ? 96 : (chip == 1 << 10) ? 118 : (chip == 1 << 11) ? 171 : (chip == 1 << 12) ? 278 : 374;
             break;
         default:
             assert(false);
     }
     switch (speed_entry.rate) {
         case 800:
-            speed_entry.nXS = (chip == 512) ? 40 : (chip == 1 << 10) ? 48 : (chip == 1 << 11) ? 68 : (chip == 1 << 12)
-                                                                                                     ? 108 : 144;
+            speed_entry.nXS = (chip == 512) ? 40 : (chip == 1 << 10) ? 48 : (chip == 1 << 11) ? 68 : (chip == 1 << 12) ? 108 : 144;
             break;
         case 1066:
-            speed_entry.nXS = (chip == 512) ? 54 : (chip == 1 << 10) ? 64 : (chip == 1 << 11) ? 91 : (chip == 1 << 12)
-                                                                                                     ? 144 : 192;
+            speed_entry.nXS = (chip == 512) ? 54 : (chip == 1 << 10) ? 64 : (chip == 1 << 11) ? 91 : (chip == 1 << 12) ? 144 : 192;
             break;
         case 1333:
-            speed_entry.nXS = (chip == 512) ? 67 : (chip == 1 << 10) ? 80 : (chip == 1 << 11) ? 114 : (chip == 1 << 12)
-                                                                                                      ? 180 : 240;
+            speed_entry.nXS = (chip == 512) ? 67 : (chip == 1 << 10) ? 80 : (chip == 1 << 11) ? 114 : (chip == 1 << 12) ? 180 : 240;
             break;
         case 1600:
-            speed_entry.nXS = (chip == 512) ? 80 : (chip == 1 << 10) ? 96 : (chip == 1 << 11) ? 136 : (chip == 1 << 12)
-                                                                                                      ? 216 : 288;
+            speed_entry.nXS = (chip == 512) ? 80 : (chip == 1 << 10) ? 96 : (chip == 1 << 11) ? 136 : (chip == 1 << 12) ? 216 : 288;
             break;
         case 1866:
-            speed_entry.nXS = (chip == 512) ? 94 : (chip == 1 << 10) ? 112 : (chip == 1 << 11) ? 159 : (chip == 1 << 12)
-                                                                                                       ? 252 : 336;
+            speed_entry.nXS = (chip == 512) ? 94 : (chip == 1 << 10) ? 112 : (chip == 1 << 11) ? 159 : (chip == 1 << 12) ? 252 : 336;
             break;
         case 2133:
-            speed_entry.nXS = (chip == 512) ? 107 : (chip == 1 << 10) ? 128 : (chip == 1 << 11) ? 182 : (chip ==
-                                                                                                         1 << 12) ? 288
-                                                                                                                  : 384;
+            speed_entry.nXS = (chip == 512) ? 107 : (chip == 1 << 10) ? 128 : (chip == 1 << 11) ? 182 : (chip == 1 << 12) ? 288 : 384;
             break;
         default:
             assert(false);
@@ -305,6 +291,7 @@ void DDR3::init_prereq() {
                 assert(false && "Rank is powered up");
             case int(State::FActPowerDown):
             case int(State::SActPowerDown):
+                return Command::PUP_ACT;
             case int(State::FPrePowerDown):
             case int(State::SPrePowerDown):
                 assert(false && "Rank is already powered up");
@@ -493,13 +480,34 @@ void DDR3::init_timing() {
 
     // CAS <-> PD
     t[int(Command::RD)].push_back({Command::PDN_F_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RD)].push_back({Command::PDN_S_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RD)].push_back({Command::PDN_F_PRE, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RD)].push_back({Command::PDN_S_PRE, 1, s.nCL + s.nBL + 1});
+
     t[int(Command::RDA)].push_back({Command::PDN_F_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RDA)].push_back({Command::PDN_S_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RDA)].push_back({Command::PDN_F_PRE, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RDA)].push_back({Command::PDN_S_PRE, 1, s.nCL + s.nBL + 1});
+
     t[int(Command::WR)].push_back({Command::PDN_F_ACT, 1, s.nCWL + s.nBL + s.nWR});
+    t[int(Command::WR)].push_back({Command::PDN_S_ACT, 1, s.nCWL + s.nBL + s.nWR});
+    t[int(Command::WR)].push_back({Command::PDN_F_PRE, 1, s.nCWL + s.nBL + s.nWR});
+    t[int(Command::WR)].push_back({Command::PDN_S_PRE, 1, s.nCWL + s.nBL + s.nWR});
+
     t[int(Command::WRA)].push_back({Command::PDN_F_ACT, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+    t[int(Command::WRA)].push_back({Command::PDN_S_ACT, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+    t[int(Command::WRA)].push_back({Command::PDN_F_PRE, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+    t[int(Command::WRA)].push_back({Command::PDN_S_PRE, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+
     t[int(Command::PUP_ACT)].push_back({Command::RD, 1, s.nXP});
     t[int(Command::PUP_ACT)].push_back({Command::RDA, 1, s.nXP});
     t[int(Command::PUP_ACT)].push_back({Command::WR, 1, s.nXP});
     t[int(Command::PUP_ACT)].push_back({Command::WRA, 1, s.nXP});
+
+    t[int(Command::PUP_PRE)].push_back({Command::RD, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::RDA, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::WR, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::WRA, 1, s.nXP});
 
     // CAS <-> SR: none (all banks have to be precharged)
 
@@ -516,9 +524,17 @@ void DDR3::init_timing() {
 
     // RAS <-> PD
     t[int(Command::ACT)].push_back({Command::PDN_F_ACT, 1, 1});
+    t[int(Command::ACT)].push_back({Command::PDN_S_ACT, 1, 1});
+    t[int(Command::ACT)].push_back({Command::PDN_F_PRE, 1, 1});
+    t[int(Command::ACT)].push_back({Command::PDN_S_PRE, 1, 1});
+
     t[int(Command::PUP_ACT)].push_back({Command::ACT, 1, s.nXP});
     t[int(Command::PUP_ACT)].push_back({Command::PRE, 1, s.nXP});
     t[int(Command::PUP_ACT)].push_back({Command::PREA, 1, s.nXP});
+
+    t[int(Command::PUP_PRE)].push_back({Command::ACT, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PRE, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PREA, 1, s.nXP});
 
     // RAS <-> SR
     t[int(Command::PRE)].push_back({Command::SRE, 1, s.nRP});
@@ -530,18 +546,45 @@ void DDR3::init_timing() {
 
     // REF <-> PD
     t[int(Command::REF)].push_back({Command::PDN_F_ACT, 1, 1});
+    t[int(Command::REF)].push_back({Command::PDN_S_ACT, 1, 1});
+    t[int(Command::REF)].push_back({Command::PDN_F_PRE, 1, 1});
+    t[int(Command::REF)].push_back({Command::PDN_S_PRE, 1, 1});
+
     t[int(Command::PUP_ACT)].push_back({Command::REF, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::REF, 1, s.nXP});
 
     // REF <-> SR
     t[int(Command::SRX)].push_back({Command::REF, 1, s.nXS});
 
     // PD <-> PD
     t[int(Command::PDN_F_ACT)].push_back({Command::PUP_ACT, 1, s.nPD});
+    t[int(Command::PDN_S_ACT)].push_back({Command::PUP_ACT, 1, s.nPD});
+    t[int(Command::PDN_F_PRE)].push_back({Command::PUP_ACT, 1, s.nPD});
+    t[int(Command::PDN_S_PRE)].push_back({Command::PUP_ACT, 1, s.nPD});
+
+    t[int(Command::PDN_F_ACT)].push_back({Command::PUP_PRE, 1, s.nPD});
+    t[int(Command::PDN_S_ACT)].push_back({Command::PUP_PRE, 1, s.nPD});
+    t[int(Command::PDN_F_PRE)].push_back({Command::PUP_PRE, 1, s.nPD});
+    t[int(Command::PDN_S_PRE)].push_back({Command::PUP_PRE, 1, s.nPD});
+
     t[int(Command::PUP_ACT)].push_back({Command::PDN_F_ACT, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PDN_S_ACT, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PDN_F_PRE, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PDN_S_PRE, 1, s.nXP});
+
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_F_ACT, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_S_ACT, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_F_PRE, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_S_PRE, 1, s.nXP});
 
     // PD <-> SR
     t[int(Command::PUP_ACT)].push_back({Command::SRE, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::SRE, 1, s.nXP});
+
     t[int(Command::SRX)].push_back({Command::PDN_F_ACT, 1, s.nXS});
+    t[int(Command::SRX)].push_back({Command::PDN_S_ACT, 1, s.nXS});
+    t[int(Command::SRX)].push_back({Command::PDN_F_PRE, 1, s.nXS});
+    t[int(Command::SRX)].push_back({Command::PDN_S_PRE, 1, s.nXS});
 
     // SR <-> SR
     t[int(Command::SRE)].push_back({Command::SRX, 1, s.nCKESR});

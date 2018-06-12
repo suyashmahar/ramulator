@@ -463,8 +463,7 @@ bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
     req_addr = std::stoul(line, &pos, 16);
 
     pos = line.find_first_not_of(' ', pos+1);
-    std::cout << "line: " << line << std::endl;
-
+    
     if (pos == string::npos || line.substr(pos)[0] == 'R')
         req_type = Request::Type::READ;
     else if (line.substr(pos)[0] == 'W')
