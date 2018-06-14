@@ -131,6 +131,7 @@ namespace ramulator {
                     cmd == Command::WR  ||
                     cmd == Command::RDA ||
                     cmd == Command::WRA ||
+                    cmd == Command::REF ||
                     cmd == Command::PDN_F_ACT ||
                     cmd == Command::PDN_S_ACT ||
                     cmd == Command::PDN_F_PRE ||

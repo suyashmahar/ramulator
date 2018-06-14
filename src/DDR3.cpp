@@ -294,7 +294,25 @@ void DDR3::init_prereq() {
                 return Command::PUP_ACT;
             case int(State::FPrePowerDown):
             case int(State::SPrePowerDown):
-                assert(false && "Rank is already powered up");
+                return Command::PUP_PRE;
+            case int(State::SelfRefresh):
+                assert(false && "Cannot exit self-refresh mode with PUP_ACT");
+            default:
+                assert(false);
+        }
+    };
+
+    // PUP_PRE
+    prereq[int(Level::Rank)][int(Command::PUP_PRE)] = [](DRAM<DDR3> *node, Command cmd, int id) {
+        switch (int(node->state)) {
+            case int(State::PowerUp):
+                assert(false && "Rank is powered up");
+            case int(State::FActPowerDown):
+            case int(State::SActPowerDown):
+                return Command::PUP_ACT;
+            case int(State::FPrePowerDown):
+            case int(State::SPrePowerDown):
+                return Command::PUP_PRE;
             case int(State::SelfRefresh):
                 assert(false && "Cannot exit self-refresh mode with PUP_ACT");
             default:
@@ -372,6 +390,17 @@ void DDR3::init_lambda() {
         for (auto bank : node->children) {
             bank->state = State::Closed;
             bank->row_state.clear();
+        }
+
+        // Does the rank need to transition to pre-charge power-down mode?
+        if (node->state == State::FActPowerDown || node->state == State::SActPowerDown) {
+            // Yes, perform the state transition
+            switch (int(node->state)) {
+                case int(State::FActPowerDown):
+                    node->state = State::FPrePowerDown;
+                case int(State::SActPowerDown):
+                    node->state = State::SPrePowerDown;
+            }
         }
     };
     lambda[int(Level::Rank)][int(Command::REF)] = [](DRAM<DDR3> *node, int id) {};

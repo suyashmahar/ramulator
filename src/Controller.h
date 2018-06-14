@@ -352,7 +352,7 @@ public:
         }
 
         /*** 2. Refresh scheduler ***/
-        // refresh->tick_ref();
+        refresh->tick_ref();
 
         /*** 3. Should we schedule writes? ***/
         if (!write_mode) {
