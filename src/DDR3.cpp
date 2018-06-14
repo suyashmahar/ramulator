@@ -93,56 +93,171 @@ void DDR3::init_speed()
 void DDR3::init_prereq()
 {
     // RD
-    prereq[int(Level::Rank)][int(Command::RD)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
+    prereq[int(Level::Rank)][int(Command::RD)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
-            case int(State::PowerUp): return Command::MAX;
-            case int(State::ActPowerDown): return Command::PDX;
-            case int(State::PrePowerDown): return Command::PDX;
-            case int(State::SelfRefresh): return Command::SRX;
-            default: assert(false);
-        }};
-    prereq[int(Level::Bank)][int(Command::RD)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
+            case int(State::PowerUp):
+                return Command::MAX; // Cannot be decoded at this level
+            case int(State::SActPowerDown):
+            case int(State::FActPowerDown):
+            case int(State::SPrePowerDown):
+            case int(State::FPrePowerDown):
+                return Command::RD; // Rank is powered down, return RD
+            case int(State::SelfRefresh):
+                return Command::SRX;
+            default:
+                assert(false);
+        }
+    };
+    prereq[int(Level::Bank)][int(Command::RD)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
-            case int(State::Closed): return Command::ACT;
+            case int(State::Closed):
+                return Command::ACT;
             case int(State::Opened):
                 if (node->row_state.find(id) != node->row_state.end())
                     return cmd;
                 return Command::PRE;
-            default: assert(false);
-        }};
+            default:
+                assert(false);
+        }
+    };
 
     // WR
     prereq[int(Level::Rank)][int(Command::WR)] = prereq[int(Level::Rank)][int(Command::RD)];
     prereq[int(Level::Bank)][int(Command::WR)] = prereq[int(Level::Bank)][int(Command::RD)];
 
     // REF
-    prereq[int(Level::Rank)][int(Command::REF)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
+    prereq[int(Level::Rank)][int(Command::REF)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         for (auto bank : node->children) {
             if (bank->state == State::Closed)
                 continue;
             return Command::PREA;
         }
-        return Command::REF;};
+        return Command::REF;
+    };
 
-    // PD
-    prereq[int(Level::Rank)][int(Command::PDE)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
+    // PDN_S_PRE
+    prereq[int(Level::Rank)][int(Command::PDN_S_PRE)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
-            case int(State::PowerUp): return Command::PDE;
-            case int(State::ActPowerDown): return Command::PDE;
-            case int(State::PrePowerDown): return Command::PDE;
-            case int(State::SelfRefresh): return Command::SRX;
-            default: assert(false);
-        }};
+            case int(State::PowerUp):
+                // Send Precharge-all if any bank is open
+                for (auto bank : node->children) {
+                    if (bank->state == State::Opened) {
+                        return Command::PREA;
+                    }
+                }
+                // else pre-power-down
+                return Command::PDN_S_PRE;
+            case int(State::SActPowerDown):
+            case int(State::FActPowerDown):
+            case int(State::FPrePowerDown):
+            case int(State::SPrePowerDown):
+            case int(State::SelfRefresh):
+                return Command::PDN_S_PRE; // Return the same command, let is_cmd_legal() handle it
+            default:
+                assert(false);
+        }
+    };
+
+    // PDN_F_PRE
+    prereq[int(Level::Rank)][int(Command::PDN_F_PRE)] = [](DRAM<DDR3> *node, Command cmd, int id) {
+        switch (int(node->state)) {
+            case int(State::PowerUp):
+                // Send Precharge-all if any bank is open
+                for (auto bank : node->children) {
+                    if (bank->state == State::Opened) {
+                        return Command::PREA;
+                    }
+                }
+                // else pre-power-down
+                return Command::PDN_F_PRE;
+            case int(State::SActPowerDown):
+            case int(State::FActPowerDown):
+            case int(State::SPrePowerDown):
+            case int(State::FPrePowerDown):
+            case int(State::SelfRefresh):
+                return Command::PDN_F_PRE; // Return same command, let is_cmd_legal() handle it
+            default:
+                assert(false);
+        }
+    };
+
+    // PDN_S_ACT
+    prereq[int(Level::Rank)][int(Command::PDN_S_ACT)] = [](DRAM<DDR3> *node, Command cmd, int id) {
+        switch (int(node->state)) {
+            case int(State::PowerUp):
+            case int(State::SActPowerDown):
+            case int(State::FActPowerDown):
+            case int(State::SPrePowerDown):
+            case int(State::FPrePowerDown):
+            case int(State::SelfRefresh):
+                return Command::PDN_S_ACT;
+            default:
+                assert(false);
+        }
+    };
+
+    // PDN_F_ACT
+    prereq[int(Level::Rank)][int(Command::PDN_F_ACT)] = [](DRAM<DDR3> *node, Command cmd, int id) {
+        switch (int(node->state)) {
+            case int(State::PowerUp):
+            case int(State::FActPowerDown):
+            case int(State::SActPowerDown):
+            case int(State::SPrePowerDown):
+            case int(State::FPrePowerDown):
+            case int(State::SelfRefresh):
+                return Command::PDN_F_ACT;
+            default:
+                assert(false);
+        }
+    };
+
+    // PUP_ACT
+    prereq[int(Level::Rank)][int(Command::PUP_ACT)] = [](DRAM<DDR3> *node, Command cmd, int id) {
+        switch (int(node->state)) {
+            case int(State::PowerUp):
+            case int(State::FActPowerDown):
+            case int(State::SActPowerDown):
+            case int(State::FPrePowerDown):
+            case int(State::SPrePowerDown):
+            case int(State::SelfRefresh):
+                return Command::PUP_ACT;
+            default:
+                assert(false);
+        }
+    };
+
+    // PUP_PRE
+    prereq[int(Level::Rank)][int(Command::PUP_PRE)] = [](DRAM<DDR3> *node, Command cmd, int id) {
+        switch (int(node->state)) {
+            case int(State::PowerUp):
+            case int(State::FActPowerDown):
+            case int(State::SActPowerDown):
+            case int(State::FPrePowerDown):
+            case int(State::SPrePowerDown):
+            case int(State::SelfRefresh):
+                return Command::PUP_PRE;
+            default:
+                assert(false);
+        }
+    };
 
     // SR
-    prereq[int(Level::Rank)][int(Command::SRE)] = [] (DRAM<DDR3>* node, Command cmd, int id) {
+    prereq[int(Level::Rank)][int(Command::SRE)] = [](DRAM<DDR3> *node, Command cmd, int id) {
         switch (int(node->state)) {
-            case int(State::PowerUp): return Command::SRE;
-            case int(State::ActPowerDown): return Command::PDX;
-            case int(State::PrePowerDown): return Command::PDX;
-            case int(State::SelfRefresh): return Command::SRE;
-            default: assert(false);
-        }};
+            case int(State::PowerUp):
+                return Command::SRE;
+            case int(State::SActPowerDown):
+            case int(State::FActPowerDown):
+                return Command::PUP_ACT;
+            case int(State::SPrePowerDown):
+            case int(State::FPrePowerDown):
+                return Command::PUP_PRE;
+            case int(State::SelfRefresh):
+                return Command::SRE;
+            default:
+                assert(false);
+        }
+    };
 }
 
 
@@ -189,36 +304,66 @@ void DDR3::init_lambda()
     lambda[int(Level::Rank)][int(Command::PREA)] = [] (DRAM<DDR3>* node, int id) {
         for (auto bank : node->children) {
             bank->state = State::Closed;
-            bank->row_state.clear();}};
-    lambda[int(Level::Rank)][int(Command::REF)] = [] (DRAM<DDR3>* node, int id) {};
-    lambda[int(Level::Bank)][int(Command::RD)] = [] (DRAM<DDR3>* node, int id) {};
-    lambda[int(Level::Bank)][int(Command::WR)] = [] (DRAM<DDR3>* node, int id) {};
-    lambda[int(Level::Bank)][int(Command::RDA)] = [] (DRAM<DDR3>* node, int id) {
-        node->state = State::Closed;
-        node->row_state.clear();};
-    lambda[int(Level::Bank)][int(Command::WRA)] = [] (DRAM<DDR3>* node, int id) {
-        node->state = State::Closed;
-        node->row_state.clear();};
-    lambda[int(Level::Rank)][int(Command::PDE)] = [] (DRAM<DDR3>* node, int id) {
-        for (auto bank : node->children) {
-            if (bank->state == State::Closed)
-                continue;
-            node->state = State::ActPowerDown;
-            return;
+            bank->row_state.clear();
         }
-        node->state = State::PrePowerDown;};
-    lambda[int(Level::Rank)][int(Command::PDX)] = [] (DRAM<DDR3>* node, int id) {
-        node->state = State::PowerUp;};
-    lambda[int(Level::Rank)][int(Command::SRE)] = [] (DRAM<DDR3>* node, int id) {
-        node->state = State::SelfRefresh;};
-    lambda[int(Level::Rank)][int(Command::SRX)] = [] (DRAM<DDR3>* node, int id) {
-        node->state = State::PowerUp;};
+
+        // Does the rank need to transition to pre-charge power-down mode?
+        if (node->state == State::FActPowerDown || node->state == State::SActPowerDown) {
+            // Yes, perform the state transition
+            switch (int(node->state)) {
+                case int(State::FActPowerDown):
+                    node->state = State::FPrePowerDown;
+                case int(State::SActPowerDown):
+                    node->state = State::SPrePowerDown;
+            }
+        }
+    };
+    lambda[int(Level::Rank)][int(Command::REF)] = [](DRAM<DDR3> *node, int id) {};
+    lambda[int(Level::Bank)][int(Command::RD)] = [](DRAM<DDR3> *node, int id) {};
+    lambda[int(Level::Bank)][int(Command::WR)] = [](DRAM<DDR3> *node, int id) {};
+    lambda[int(Level::Bank)][int(Command::RDA)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::Closed;
+        node->row_state.clear();
+    };
+    lambda[int(Level::Bank)][int(Command::WRA)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::Closed;
+        node->row_state.clear();
+    };
+    lambda[int(Level::Rank)][int(Command::PDN_F_PRE)] = [](DRAM<DDR3> *node, int id) {
+        for (auto bank : node->children) {
+            assert(bank->state == State::Closed && "Close all open banks entering precharge powerdown.");
+        }
+        node->state = State::FPrePowerDown;
+    };
+    lambda[int(Level::Rank)][int(Command::PDN_S_PRE)] = [](DRAM<DDR3> *node, int id) {
+        for (auto bank : node->children) {
+            assert(bank->state == State::Closed && "Close all open banks entering precharge powerdown.");
+        }
+        node->state = State::SPrePowerDown;
+    };
+    lambda[int(Level::Rank)][int(Command::PDN_F_ACT)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::FActPowerDown;
+    };
+    lambda[int(Level::Rank)][int(Command::PDN_S_ACT)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::SActPowerDown;
+    };
+    lambda[int(Level::Rank)][int(Command::PUP_ACT)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::PowerUp;
+    };
+    lambda[int(Level::Rank)][int(Command::PUP_PRE)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::PowerUp;
+    };
+    lambda[int(Level::Rank)][int(Command::SRE)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::SelfRefresh;
+    };
+    lambda[int(Level::Rank)][int(Command::SRX)] = [](DRAM<DDR3> *node, int id) {
+        node->state = State::PowerUp;
+    };
 }
 
 
-void DDR3::init_timing()
-{
-    SpeedEntry& s = speed_entry;
+void DDR3::init_timing() {
+    SpeedEntry &s = speed_entry;
     vector<TimingEntry> *t;
 
     /*** Channel ***/
@@ -278,14 +423,35 @@ void DDR3::init_timing()
     t[int(Command::WR)].push_back({Command::PREA, 1, s.nCWL + s.nBL + s.nWR});
 
     // CAS <-> PD
-    t[int(Command::RD)].push_back({Command::PDE, 1, s.nCL + s.nBL + 1});
-    t[int(Command::RDA)].push_back({Command::PDE, 1, s.nCL + s.nBL + 1});
-    t[int(Command::WR)].push_back({Command::PDE, 1, s.nCWL + s.nBL + s.nWR});
-    t[int(Command::WRA)].push_back({Command::PDE, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
-    t[int(Command::PDX)].push_back({Command::RD, 1, s.nXP});
-    t[int(Command::PDX)].push_back({Command::RDA, 1, s.nXP});
-    t[int(Command::PDX)].push_back({Command::WR, 1, s.nXP});
-    t[int(Command::PDX)].push_back({Command::WRA, 1, s.nXP});
+    t[int(Command::RD)].push_back({Command::PDN_F_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RD)].push_back({Command::PDN_S_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RD)].push_back({Command::PDN_F_PRE, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RD)].push_back({Command::PDN_S_PRE, 1, s.nCL + s.nBL + 1});
+
+    t[int(Command::RDA)].push_back({Command::PDN_F_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RDA)].push_back({Command::PDN_S_ACT, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RDA)].push_back({Command::PDN_F_PRE, 1, s.nCL + s.nBL + 1});
+    t[int(Command::RDA)].push_back({Command::PDN_S_PRE, 1, s.nCL + s.nBL + 1});
+
+    t[int(Command::WR)].push_back({Command::PDN_F_ACT, 1, s.nCWL + s.nBL + s.nWR});
+    t[int(Command::WR)].push_back({Command::PDN_S_ACT, 1, s.nCWL + s.nBL + s.nWR});
+    t[int(Command::WR)].push_back({Command::PDN_F_PRE, 1, s.nCWL + s.nBL + s.nWR});
+    t[int(Command::WR)].push_back({Command::PDN_S_PRE, 1, s.nCWL + s.nBL + s.nWR});
+
+    t[int(Command::WRA)].push_back({Command::PDN_F_ACT, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+    t[int(Command::WRA)].push_back({Command::PDN_S_ACT, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+    t[int(Command::WRA)].push_back({Command::PDN_F_PRE, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+    t[int(Command::WRA)].push_back({Command::PDN_S_PRE, 1, s.nCWL + s.nBL + s.nWR + 1}); // +1 for pre
+
+    t[int(Command::PUP_ACT)].push_back({Command::RD, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::RDA, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::WR, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::WRA, 1, s.nXP});
+
+    t[int(Command::PUP_PRE)].push_back({Command::RD, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::RDA, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::WR, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::WRA, 1, s.nXP});
 
     // CAS <-> SR: none (all banks have to be precharged)
 
@@ -301,10 +467,18 @@ void DDR3::init_timing()
     t[int(Command::REF)].push_back({Command::ACT, 1, s.nRFC});
 
     // RAS <-> PD
-    t[int(Command::ACT)].push_back({Command::PDE, 1, 1});
-    t[int(Command::PDX)].push_back({Command::ACT, 1, s.nXP});
-    t[int(Command::PDX)].push_back({Command::PRE, 1, s.nXP});
-    t[int(Command::PDX)].push_back({Command::PREA, 1, s.nXP});
+    t[int(Command::ACT)].push_back({Command::PDN_F_ACT, 1, 1});
+    t[int(Command::ACT)].push_back({Command::PDN_S_ACT, 1, 1});
+    t[int(Command::ACT)].push_back({Command::PDN_F_PRE, 1, 1});
+    t[int(Command::ACT)].push_back({Command::PDN_S_PRE, 1, 1});
+
+    t[int(Command::PUP_ACT)].push_back({Command::ACT, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PRE, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PREA, 1, s.nXP});
+
+    t[int(Command::PUP_PRE)].push_back({Command::ACT, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PRE, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PREA, 1, s.nXP});
 
     // RAS <-> SR
     t[int(Command::PRE)].push_back({Command::SRE, 1, s.nRP});
@@ -315,19 +489,39 @@ void DDR3::init_timing()
     t[int(Command::REF)].push_back({Command::REF, 1, s.nRFC});
 
     // REF <-> PD
-    t[int(Command::REF)].push_back({Command::PDE, 1, 1});
-    t[int(Command::PDX)].push_back({Command::REF, 1, s.nXP});
+    t[int(Command::REF)].push_back({Command::PDN_F_ACT, 1, 1});
+    t[int(Command::REF)].push_back({Command::PDN_S_ACT, 1, 1});
+    t[int(Command::REF)].push_back({Command::PDN_F_PRE, 1, 1});
+    t[int(Command::REF)].push_back({Command::PDN_S_PRE, 1, 1});
+
+    t[int(Command::PUP_ACT)].push_back({Command::REF, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::REF, 1, s.nXP});
 
     // REF <-> SR
     t[int(Command::SRX)].push_back({Command::REF, 1, s.nXS});
 
     // PD <-> PD
-    t[int(Command::PDE)].push_back({Command::PDX, 1, s.nPD});
-    t[int(Command::PDX)].push_back({Command::PDE, 1, s.nXP});
+    t[int(Command::PDN_F_ACT)].push_back({Command::PUP_ACT, 1, s.nPD});
+    t[int(Command::PDN_S_ACT)].push_back({Command::PUP_ACT, 1, s.nPD});
+    t[int(Command::PDN_F_PRE)].push_back({Command::PUP_ACT, 1, s.nPD});
+    t[int(Command::PDN_S_PRE)].push_back({Command::PUP_ACT, 1, s.nPD});
+
+    t[int(Command::PDN_F_ACT)].push_back({Command::PUP_PRE, 1, s.nPD});
+    t[int(Command::PDN_S_ACT)].push_back({Command::PUP_PRE, 1, s.nPD});
+    t[int(Command::PDN_F_PRE)].push_back({Command::PUP_PRE, 1, s.nPD});
+    t[int(Command::PDN_S_PRE)].push_back({Command::PUP_PRE, 1, s.nPD});
+
+    t[int(Command::PUP_ACT)].push_back({Command::PDN_F_ACT, 1, s.nXP});
+    t[int(Command::PUP_ACT)].push_back({Command::PDN_S_ACT, 1, s.nXP});
+
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_F_ACT, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_S_ACT, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_F_PRE, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::PDN_S_PRE, 1, s.nXP});
 
     // PD <-> SR
-    t[int(Command::PDX)].push_back({Command::SRE, 1, s.nXP});
-    t[int(Command::SRX)].push_back({Command::PDE, 1, s.nXS});
+    t[int(Command::PUP_ACT)].push_back({Command::SRE, 1, s.nXP});
+    t[int(Command::PUP_PRE)].push_back({Command::SRE, 1, s.nXP});
 
     // SR <-> SR
     t[int(Command::SRE)].push_back({Command::SRX, 1, s.nCKESR});

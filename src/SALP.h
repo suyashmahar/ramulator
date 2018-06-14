@@ -105,6 +105,14 @@ public:
         }
     }
 
+    bool is_poweringdown(Command cmd)
+    {
+        assert(false && "Not implemented yet");
+    }
+    bool is_poweringup(Command cmd)
+    {
+        assert(false && "Not implemented yet");
+    }
 
     /* State */
     enum class State : int
@@ -113,6 +121,10 @@ public:
     } start[int(Level::MAX)] = {
         State::MAX, State::PowerUp, State::Closed, State::Closed, State::Closed, State::MAX
     };
+
+    inline bool is_cmdlegal(Command cmd, Level level, State state) {
+        return true; // Assumes all commands are legal
+    }
 
     /* Translate */
     Command translate[int(Request::Type::MAX)] = {
