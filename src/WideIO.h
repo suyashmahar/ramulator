@@ -98,11 +98,11 @@ public:
 
     bool is_poweringdown(Command cmd)
     {
-        assert(false);
+        assert(false && "Not implemented yet");
     }
     bool is_poweringup(Command cmd)
     {
-        assert(false);
+        assert(false && "Not implemented yet");
     }
 
     /* State */
@@ -114,7 +114,7 @@ public:
     };
 
     inline bool is_cmdlegal(Command cmd, Level level, State state) {
-        return true; // Assumes all commands are legal : Suyash
+        return true; // Assumes all commands are legal
     }
 
     /* Translate */

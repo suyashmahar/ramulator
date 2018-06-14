@@ -97,16 +97,11 @@ public:
 
     bool is_poweringdown(Command cmd)
     {
-        switch(int(cmd)) {
-            case int(Command::PDE):
-                return true;
-            default:
-                return false;
-        }
+        assert(false && "Not implemented yet");
     }
     bool is_poweringup(Command cmd)
     {
-        assert(false);
+        assert(false && "Not implemented yet");
     }
     /* State */
     enum class State : int

@@ -142,15 +142,15 @@ public:
         }
     }
 
-    bool is_poweringup(Command cmd)
-    {
-        assert(false);
-    }
-
     bool is_poweringdown(Command cmd)
     {
-        assert(false);
+        assert(false && "Not implemented yet");
     }
+    bool is_poweringup(Command cmd)
+    {
+        assert(false && "Not implemented yet");
+    }
+
     /* State */
     enum class State : int
     {

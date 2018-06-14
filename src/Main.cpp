@@ -33,7 +33,7 @@ using namespace ramulator;
 bool ramulator::warmup_complete = false;
 
 template<typename T>
-void run_dramtrace(const Config &configs, Memory<T, Controller> &memory, const char *tracename) {
+void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const char* tracename) {
 
     /* initialize DRAM trace */
     Trace trace(tracename);
@@ -46,12 +46,12 @@ void run_dramtrace(const Config &configs, Memory<T, Controller> &memory, const c
 
     Request::Type type = Request::Type::READ;
     map<int, int> latencies;
-    auto read_complete = [&latencies](Request &r) { latencies[r.depart - r.arrive]++; };
+    auto read_complete = [&latencies](Request& r){latencies[r.depart - r.arrive]++;};
 
     Request req(addr, type, read_complete);
 
-    while (!end || memory.pending_requests()) {
-        if (!end && !stall) {
+    while (!end || memory.pending_requests()){
+        if (!end && !stall){
             end = !trace.get_dramtrace_request(addr, type);
         }
 
@@ -90,8 +90,9 @@ void run_dramtrace(const Config &configs, Memory<T, Controller> &memory, const c
     Stats::statlist.printall();
 }
 
-template<typename T>
-void run_cputrace(const Config &configs, Memory<T, Controller> &memory, const std::vector<const char *> &files) {
+template <typename T>
+void run_cputrace(const Config& configs, Memory<T, Controller>& memory, const std::vector<const char *>& files)
+{
     int cpu_tick = configs.get_cpu_tick();
     int mem_tick = configs.get_mem_tick();
     auto send = bind(&Memory<T, Controller>::send, &memory, placeholders::_1);
@@ -100,7 +101,7 @@ void run_cputrace(const Config &configs, Memory<T, Controller> &memory, const st
     long warmup_insts = configs.get_warmup_insts();
     bool is_warming_up = (warmup_insts != 0);
 
-    for (long i = 0; is_warming_up; i++) {
+    for(long i = 0; is_warming_up; i++){
         proc.tick();
         Stats::curTick++;
         if (i % cpu_tick == (cpu_tick - 1))
@@ -108,14 +109,14 @@ void run_cputrace(const Config &configs, Memory<T, Controller> &memory, const st
                 memory.tick();
 
         is_warming_up = false;
-        for (int c = 0; c < proc.cores.size(); c++) {
-            if (proc.cores[c]->get_insts() < warmup_insts)
+        for(int c = 0; c < proc.cores.size(); c++){
+            if(proc.cores[c]->get_insts() < warmup_insts)
                 is_warming_up = true;
         }
 
         if (is_warming_up && proc.has_reached_limit()) {
             printf("WARNING: The end of the input trace file was reached during warmup. "
-                   "Consider changing warmup_insts in the config file. \n");
+                    "Consider changing warmup_insts in the config file. \n");
             break;
         }
 
@@ -130,9 +131,9 @@ void run_cputrace(const Config &configs, Memory<T, Controller> &memory, const st
     printf("Starting the simulation...\n");
 
     int tick_mult = cpu_tick * mem_tick;
-    for (long i = 0;; i++) {
+    for (long i = 0; ; i++) {
         if (((i % tick_mult) % mem_tick) == 0) { // When the CPU is ticked cpu_tick times,
-            // the memory controller should be ticked mem_tick times
+                                                 // the memory controller should be ticked mem_tick times
             proc.tick();
             Stats::curTick++; // processor clock, global, for Statistics
 
@@ -185,16 +186,17 @@ void start_run(const Config &configs, T *spec, const vector<const char *> &files
     }
 }
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char *argv[])
+{
     if (argc < 2) {
         printf("Usage: %s <configs-file> --mode=cpu,dram [--stats <filename>] <trace-filename1> <trace-filename2>\n"
-               "Example: %s ramulator-configs.cfg --mode=cpu cpu.trace cpu.trace\n", argv[0], argv[0]);
+            "Example: %s ramulator-configs.cfg --mode=cpu cpu.trace cpu.trace\n", argv[0], argv[0]);
         return 0;
     }
 
     Config configs(argv[1]);
 
-    const std::string &standard = configs["standard"];
+    const std::string& standard = configs["standard"];
     assert(standard != "" || "DRAM standard should be specified.");
 
     const char *trace_type = strstr(argv[2], "=");

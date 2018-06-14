@@ -488,9 +488,3 @@ bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
     }
     return true;
 }
-
-
-
-
-
-

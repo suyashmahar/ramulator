@@ -73,7 +73,7 @@ public:
 		     RoBaRaCoCh, // Row, Bank, Rank, Column, Channel
 		     MAX,
     } type = Type::RoBaRaCoCh;
-  
+
     enum class Translation {
       None,
       Random,
