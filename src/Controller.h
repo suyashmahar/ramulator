@@ -440,7 +440,10 @@ public:
                 actq.q.push_back(*req);
                 queue->q.erase(req);
             }
-
+            // Erase power up/down request from the queue, it is no longer needed
+            if (channel->spec->is_poweringdown(cmd) || channel->spec->is_poweringup(cmd)) {
+                queue->q.erase(req);
+            }
             return;
         }
 

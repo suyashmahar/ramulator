@@ -269,6 +269,12 @@ bool DRAM<T>::check(typename T::Command cmd, const int* addr, long clk)
     if (next[int(cmd)] != -1 && clk < next[int(cmd)])
         return false; // stop recursion: the check failed at this level
 
+    // Is this command legal at this level?
+    if (!spec->is_cmdlelgal(cmd, level, state)) {
+        // No, stop recursion: the command cannot is illegal
+        return false;
+    }
+
     int child_id = addr[int(level)+1];
     if (child_id < 0 || level == spec->scope[int(cmd)] || !children.size())
         return true; // stop recursion: the check passed at all levels

@@ -5,3 +5,12 @@ obj/
 
 # Compiled target executable files
 ramulator
+
+# InteliJ idea files
+.idea/
+
+# Command trace files
+cmd-trace-chan-*
+
+# Generated stats files
+*.stats

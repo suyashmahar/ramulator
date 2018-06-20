@@ -272,6 +272,10 @@ public:
 
           assert(n_rm > 0);
         } /* closing */
+
+        if (spec->is_poweringdown(cmd)) {
+
+        }
     }
 
     int get_hits(const vector<int>& addr_vec, const bool to_opened_row = false)

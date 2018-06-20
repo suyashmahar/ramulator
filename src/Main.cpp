@@ -40,8 +40,10 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
 
     /* run simulation */
     bool stall = false, end = false;
+    bool is_req_nop = false;
     int reads = 0, writes = 0, clks = 0;
-    long addr = 0;
+    long addr = 0, ticks_counter = 0;
+
     Request::Type type = Request::Type::READ;
     map<int, int> latencies;
     auto read_complete = [&latencies](Request& r){latencies[r.depart - r.arrive]++;};
@@ -53,28 +55,39 @@ void run_dramtrace(const Config& configs, Memory<T, Controller>& memory, const c
             end = !trace.get_dramtrace_request(addr, type);
         }
 
-        if (!end){
-            req.addr = addr;
-            req.type = type;
-            stall = !memory.send(req);
-            if (!stall){
-                if (type == Request::Type::READ) reads++;
-                else if (type == Request::Type::WRITE) writes++;
+        is_req_nop = (type == Request::Type::NOP);
+
+        // Check if the request is a NOP
+        if (!is_req_nop) {
+            // It is not, send the request to the controller now
+            if (!end) {
+                req.addr = addr;
+                req.type = type;
+                stall = !memory.send(req);
+                if (!stall) {
+                    if (type == Request::Type::READ) reads++;
+                    else if (type == Request::Type::WRITE) writes++;
+                }
+            } else {
+                memory.set_high_writeq_watermark(0.0f); // make sure that all write requests in the
+                // write queue are drained
             }
         }
-        else {
-            memory.set_high_writeq_watermark(0.0f); // make sure that all write requests in the 
-                                                    // write queue are drained
-        }
 
-        memory.tick();
-        clks ++;
-        Stats::curTick++; // memory clock, global, for Statistics
+        // NOP:  Tick everything 'addr+1' times
+        //       (+1 for the current cycle)
+        // Else: Just tick once for the current cycle
+        ticks_counter = (is_req_nop) ? addr+1 : 1;
+        do {
+            memory.tick();
+            clks++;
+            Stats::curTick++; // memory clock, global, for Statistics
+            ticks_counter--;
+        } while (ticks_counter > 0);
     }
     // This a workaround for statistics set only initially lost in the end
     memory.finish();
     Stats::statlist.printall();
-
 }
 
 template <typename T>
@@ -114,7 +127,7 @@ void run_cputrace(const Config& configs, Memory<T, Controller>& memory, const st
     Stats::reset_stats();
     proc.reset_stats();
     assert(proc.get_insts() == 0);
-    
+
     printf("Starting the simulation...\n");
 
     int tick_mult = cpu_tick * mem_tick;
@@ -131,14 +144,14 @@ void run_cputrace(const Config& configs, Memory<T, Controller>& memory, const st
             } else {
                 if (configs.is_early_exit()) {
                     if (proc.finished())
-                    break;
+                        break;
                 } else {
-                if (proc.finished() && (memory.pending_requests() == 0))
-                    break;
+                    if (proc.finished() && (memory.pending_requests() == 0))
+                        break;
                 }
             }
         }
-        
+
         if (((i % tick_mult) % cpu_tick) == 0) // TODO_hasan: Better if the processor ticks the memory controller
             memory.tick();
 
@@ -149,28 +162,28 @@ void run_cputrace(const Config& configs, Memory<T, Controller>& memory, const st
 }
 
 template<typename T>
-void start_run(const Config& configs, T* spec, const vector<const char*>& files) {
-  // initiate controller and memory
-  int C = configs.get_channels(), R = configs.get_ranks();
-  // Check and Set channel, rank number
-  spec->set_channel_number(C);
-  spec->set_rank_number(R);
-  std::vector<Controller<T>*> ctrls;
-  for (int c = 0 ; c < C ; c++) {
-    DRAM<T>* channel = new DRAM<T>(spec, T::Level::Channel);
-    channel->id = c;
-    channel->regStats("");
-    Controller<T>* ctrl = new Controller<T>(configs, channel);
-    ctrls.push_back(ctrl);
-  }
-  Memory<T, Controller> memory(configs, ctrls);
+void start_run(const Config &configs, T *spec, const vector<const char *> &files) {
+    // initiate controller and memory
+    int C = configs.get_channels(), R = configs.get_ranks();
+    // Check and Set channel, rank number
+    spec->set_channel_number(C);
+    spec->set_rank_number(R);
+    std::vector<Controller<T> *> ctrls;
+    for (int c = 0; c < C; c++) {
+        DRAM<T> *channel = new DRAM<T>(spec, T::Level::Channel);
+        channel->id = c;
+        channel->regStats("");
+        Controller<T> *ctrl = new Controller<T>(configs, channel);
+        ctrls.push_back(ctrl);
+    }
+    Memory<T, Controller> memory(configs, ctrls);
 
-  assert(files.size() != 0);
-  if (configs["trace_type"] == "CPU") {
-    run_cputrace(configs, memory, files);
-  } else if (configs["trace_type"] == "DRAM") {
-    run_dramtrace(configs, memory, files[0]);
-  }
+    assert(files.size() != 0);
+    if (configs["trace_type"] == "CPU") {
+        run_cputrace(configs, memory, files);
+    } else if (configs["trace_type"] == "DRAM") {
+        run_dramtrace(configs, memory, files[0]);
+    }
 }
 
 int main(int argc, const char *argv[])
@@ -189,69 +202,69 @@ int main(int argc, const char *argv[])
     const char *trace_type = strstr(argv[2], "=");
     trace_type++;
     if (strcmp(trace_type, "cpu") == 0) {
-      configs.add("trace_type", "CPU");
+        configs.add("trace_type", "CPU");
     } else if (strcmp(trace_type, "dram") == 0) {
-      configs.add("trace_type", "DRAM");
+        configs.add("trace_type", "DRAM");
     } else {
-      printf("invalid trace type: %s\n", trace_type);
-      assert(false);
+        printf("invalid trace type: %s\n", trace_type);
+        assert(false);
     }
 
     int trace_start = 3;
     string stats_out;
     if (strcmp(argv[3], "--stats") == 0) {
-      Stats::statlist.output(argv[4]);
-      stats_out = argv[4];
-      trace_start = 5;
+        Stats::statlist.output(argv[4]);
+        stats_out = argv[4];
+        trace_start = 5;
     } else {
-      Stats::statlist.output(standard+".stats");
-      stats_out = standard + string(".stats");
+        Stats::statlist.output(standard + ".stats");
+        stats_out = standard + string(".stats");
     }
-    std::vector<const char*> files(&argv[trace_start], &argv[argc]);
+    std::vector<const char *> files(&argv[trace_start], &argv[argc]);
     configs.set_core_num(argc - trace_start);
 
     if (standard == "DDR3") {
-      DDR3* ddr3 = new DDR3(configs["org"], configs["speed"]);
-      start_run(configs, ddr3, files);
+        DDR3 *ddr3 = new DDR3(configs["org"], configs["speed"]);
+        start_run(configs, ddr3, files);
     } else if (standard == "DDR4") {
-      DDR4* ddr4 = new DDR4(configs["org"], configs["speed"]);
-      start_run(configs, ddr4, files);
+        DDR4 *ddr4 = new DDR4(configs["org"], configs["speed"]);
+        start_run(configs, ddr4, files);
     } else if (standard == "SALP-MASA") {
-      SALP* salp8 = new SALP(configs["org"], configs["speed"], "SALP-MASA", configs.get_subarrays());
-      start_run(configs, salp8, files);
+        SALP *salp8 = new SALP(configs["org"], configs["speed"], "SALP-MASA", configs.get_subarrays());
+        start_run(configs, salp8, files);
     } else if (standard == "LPDDR3") {
-      LPDDR3* lpddr3 = new LPDDR3(configs["org"], configs["speed"]);
-      start_run(configs, lpddr3, files);
+        LPDDR3 *lpddr3 = new LPDDR3(configs["org"], configs["speed"]);
+        start_run(configs, lpddr3, files);
     } else if (standard == "LPDDR4") {
-      // total cap: 2GB, 1/2 of others
-      LPDDR4* lpddr4 = new LPDDR4(configs["org"], configs["speed"]);
-      start_run(configs, lpddr4, files);
+        // total cap: 2GB, 1/2 of others
+        LPDDR4 *lpddr4 = new LPDDR4(configs["org"], configs["speed"]);
+        start_run(configs, lpddr4, files);
     } else if (standard == "GDDR5") {
-      GDDR5* gddr5 = new GDDR5(configs["org"], configs["speed"]);
-      start_run(configs, gddr5, files);
+        GDDR5 *gddr5 = new GDDR5(configs["org"], configs["speed"]);
+        start_run(configs, gddr5, files);
     } else if (standard == "HBM") {
-      HBM* hbm = new HBM(configs["org"], configs["speed"]);
-      start_run(configs, hbm, files);
+        HBM *hbm = new HBM(configs["org"], configs["speed"]);
+        start_run(configs, hbm, files);
     } else if (standard == "WideIO") {
-      // total cap: 1GB, 1/4 of others
-      WideIO* wio = new WideIO(configs["org"], configs["speed"]);
-      start_run(configs, wio, files);
+        // total cap: 1GB, 1/4 of others
+        WideIO *wio = new WideIO(configs["org"], configs["speed"]);
+        start_run(configs, wio, files);
     } else if (standard == "WideIO2") {
-      // total cap: 2GB, 1/2 of others
-      WideIO2* wio2 = new WideIO2(configs["org"], configs["speed"], configs.get_channels());
-      wio2->channel_width *= 2;
-      start_run(configs, wio2, files);
+        // total cap: 2GB, 1/2 of others
+        WideIO2 *wio2 = new WideIO2(configs["org"], configs["speed"], configs.get_channels());
+        wio2->channel_width *= 2;
+        start_run(configs, wio2, files);
     }
-    // Various refresh mechanisms
-      else if (standard == "DSARP") {
-      DSARP* dsddr3_dsarp = new DSARP(configs["org"], configs["speed"], DSARP::Type::DSARP, configs.get_subarrays());
-      start_run(configs, dsddr3_dsarp, files);
+        // Various refresh mechanisms
+    else if (standard == "DSARP") {
+        DSARP *dsddr3_dsarp = new DSARP(configs["org"], configs["speed"], DSARP::Type::DSARP, configs.get_subarrays());
+        start_run(configs, dsddr3_dsarp, files);
     } else if (standard == "ALDRAM") {
-      ALDRAM* aldram = new ALDRAM(configs["org"], configs["speed"]);
-      start_run(configs, aldram, files);
+        ALDRAM *aldram = new ALDRAM(configs["org"], configs["speed"]);
+        start_run(configs, aldram, files);
     } else if (standard == "TLDRAM") {
-      TLDRAM* tldram = new TLDRAM(configs["org"], configs["speed"], configs.get_subarrays());
-      start_run(configs, tldram, files);
+        TLDRAM *tldram = new TLDRAM(configs["org"], configs["speed"], configs.get_subarrays());
+        start_run(configs, tldram, files);
     }
 
     printf("Simulation done. Statistics written to %s\n", stats_out.c_str());
